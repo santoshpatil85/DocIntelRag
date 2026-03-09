@@ -15,10 +15,11 @@ A production-ready Python service for analyzing complex PDF documents using Retr
 - **Table Understanding**: Automatic table detection and summarization
 - **Chart/Image Analysis**: GPT-4o Vision for chart interpretation
 - **Hierarchical Chunking**: Intelligent document segmentation with content-type awareness
-- **Semantic Search**: FAISS-based vector similarity search
+- **Semantic Search**: FAISS-based vector similarity search (FAISS CPU or in-memory mock)
 - **Layout-Aware Retrieval**: Query-aware chunk prioritization
 - **Question Answering**: RAG-based Q&A using GPT-4o
 - **RESTful API**: FastAPI endpoints for easy integration
+- **Mock Mode**: Full offline development with deterministic mock services, no Azure credentials required
 
 ## Architecture
 
@@ -56,6 +57,21 @@ utils
 ```
 
 ## Setup
+
+### Mock Mode (no Azure required)
+
+A complete set of mock services is provided so you can develop and test locally without any cloud dependencies.  
+Set the following variables in your `.env` file (see [TESTING.md](TESTING.md) for details):
+
+```env
+MOCK_MODE=true
+SKIP_VALIDATION=true    # bypasses credential checks
+LOG_LEVEL=DEBUG          # helpful during development
+```
+
+You can then start the mock API server or run the validation script (`validate.py`) to ensure everything is wired up.
+
+---
 
 ### Prerequisites
 
@@ -101,6 +117,16 @@ AZURE_OPENAI_API_KEY=<key>
 ```
 
 ## Usage
+
+Before starting the real server you may want to validate the mock setup or run the demo:
+
+```bash
+# quick validation of all components (mock mode)
+python validate.py
+
+# interactive demo of each service
+python tests/test_mock_demo.py
+```
 
 ### Start the Server
 
@@ -228,6 +254,8 @@ DELETE /delete_document/{document_id}
 | API_HOST | 0.0.0.0 | API server host |
 | API_PORT | 8000 | API server port |
 | LOG_LEVEL | INFO | Logging level |
+| MOCK_MODE | false | When true, uses in-memory mock services instead of Azure |
+| SKIP_VALIDATION | false | Skip environment/credential validation (usually set in mock mode) |
 
 ## Code Examples
 
@@ -341,13 +369,32 @@ async def embed_chunks(
 
 ## Testing
 
-Basic test structure:
+Several resources are included to make testing effortless:
+
+- `tests/mock_services.py` – mock implementations for all core components (embedding, vector store, retriever, QA engine).  
+- `tests/test_server.py` – standalone FastAPI app that uses mocks; run with `python tests/test_server.py` and explore `http://localhost:8000/docs`.  
+- `tests/test_mock_demo.py` – scripted demonstration of each service.  
+- `validate.py` – quick validation script that exercises the full mock pipeline and reports 5/5 passing tests.
+
+### Running Tests
 
 ```bash
-pytest tests/
+# run validation script
+python validate.py
+
+# run the demo
+python tests/test_mock_demo.py
+
+# run the mock server
+python tests/test_server.py
+
+# run pytest suite
+pytest tests/ -v
 ```
 
-Example test:
+For more guidance see [TESTING.md](TESTING.md).
+
+Example unit test (real mode):
 ```python
 import pytest
 from vectordb.vector_store import FAISSVectorStore
@@ -357,6 +404,7 @@ async def test_vector_store():
     store = FAISSVectorStore()
     assert store.index is not None
 ```
+
 
 ## Production Deployment
 
