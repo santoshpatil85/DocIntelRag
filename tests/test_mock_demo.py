@@ -89,8 +89,8 @@ async def demo_mock_vector_store():
     if chunks[0].embedding:
         results = vector_store.search(chunks[0].embedding, top_k=3)
         print(f"\nSearch results (top 3):")
-        for chunk, score in results:
-            print(f"  {chunk.chunk_id}: similarity={score:.4f}")
+        for result in results:
+            print(f"  {result['chunk'].chunk_id}: similarity={result['score']:.4f}")
 
 
 async def demo_mock_retriever():
